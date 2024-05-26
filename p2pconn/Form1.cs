@@ -24,6 +24,10 @@ namespace p2pconn
             GlobalVariables.Root = this;
             InitializeComponent();
             Control.CheckForIllegalCrossThreadCalls = false;
+            
+            this.AllowDrop = true;
+            this.DragEnter += Form1_DragEnter;
+            this.DragDrop += Form1_DragDrop;
         }
 
         static Random r = new Random();
@@ -601,6 +605,40 @@ namespace p2pconn
             if (this.dataGridView1.Rows.Count == 1 && File.Exists(StunServersJson))
             {
                 File.Delete(StunServersJson);
+            }
+        }
+
+        void Form1_DragEnter(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+                e.Effect = DragDropEffects.Copy;
+        }
+
+        void Form1_DragDrop(object sender, DragEventArgs e)
+        {
+            if (bConnected == true)
+            {
+                string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                foreach (string file in files)
+                {
+                    Writetxtchatrom("Red", "Sending " + Path.GetFileName(file) + " file. Please, do not send anything else until the file will be sent.");
+                    byte[] fileContent = File.ReadAllBytes(file);
+                    string fileContentText = Convert.ToBase64String(fileContent);
+                    int buffer = 256;
+                    int clusters = fileContentText.Length / buffer;
+
+                    SenderReceiver.SendMessage("file|");                   
+                    System.Threading.Thread.Sleep(400);
+                    for (int i = 0; i < clusters; i++)
+                    {
+                        SenderReceiver.SendMessage(fileContentText.Substring(i, buffer));
+                        System.Threading.Thread.Sleep(400);
+                    }
+                    SenderReceiver.SendMessage(fileContentText.Substring(clusters * buffer));
+                    System.Threading.Thread.Sleep(400);
+                    SenderReceiver.SendMessage("|" + Path.GetFileName(file));
+                    Writetxtchatrom("Blue", "File sent. Now you can send information again.");
+                }
             }
         }
     }

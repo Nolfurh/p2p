@@ -69,6 +69,29 @@ namespace p2pcopy
                                 GlobalVariables.Root.Writetxtchatrom("Green", words[1]);
                                 break;
 
+                            case "file":
+                                System.Text.StringBuilder fileContent = new System.Text.StringBuilder();
+                                string filename = "file.txt";
+
+                                GlobalVariables.Root.Writetxtchatrom("Red", "Receiving file. Please, do not send anything else until the file will be received.");
+                                do
+                                {
+                                    message = sreader.ReadString();
+                                    message = aes.Decrypt(message);
+                                    if (message == null || message.Length <= 0)
+                                        continue;
+
+                                    if (message[0] != '|')
+                                        fileContent.Append(message);
+                                    else
+                                        filename = message.Substring(1);
+                                } while (message[0] != '|');
+          
+                                GlobalVariables.Root.Writetxtchatrom("Green", filename + " received. Now you can send information again.");
+                                File.WriteAllBytes(filename, Convert.FromBase64String(fileContent.ToString()));
+                                MessageBox.Show(filename + "received");
+                                break;
+
                             case "openp2pDesktop":
                                 RemoteDesktop.StartDesktop();
                                 GlobalVariables.Root.EnableButtonRdp(false);
